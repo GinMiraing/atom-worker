@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "outDir": "./dist",
+    "module": "NodeNext",
+    "target": "ES6",
+    "lib": ["es6", "dom"],
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "moduleResolution": "NodeNext"
+  },
+  "include": ["./src/**/*"],
+  "exclude": ["node_modules", "./workers/**/*"]
+}
