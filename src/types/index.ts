@@ -22,3 +22,10 @@ export type UTXO = {
   value: number;
   scriptPubkey: string;
 };
+
+export type BitworkInfo = {
+  inputBitwork: string;
+  hexBitwork: string;
+  prefix: string;
+  ext: number | undefined;
+};

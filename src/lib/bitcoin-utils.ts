@@ -1,8 +1,9 @@
 import ecc from "@bitcoinerlab/secp256k1";
 import { initEccLib } from "bitcoinjs-lib";
 import varuint from "varuint-bitcoin";
+import { CrockfordBase32 } from "crockford-base32";
 
-import { AccountInfo, UTXO } from "../types";
+import { AccountInfo, BitworkInfo, UTXO } from "../types";
 import { getInputExtra } from "./address-helper";
 
 initEccLib(ecc);
@@ -219,4 +220,130 @@ export const randomBytes = (n: number) => {
     buf[i] = Math.floor(Math.random() * 256);
   }
   return buf;
+};
+
+export const hasValidBitwork = (
+  txid: string,
+  bitwork: string,
+  bitworkx?: number
+) => {
+  if (txid.startsWith(bitwork)) {
+    if (!bitworkx) {
+      return true;
+    } else {
+      const next_char = txid[bitwork.length];
+      const char_map: {
+        [key: string]: number;
+      } = {
+        "0": 0,
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4,
+        "5": 5,
+        "6": 6,
+        "7": 7,
+        "8": 8,
+        "9": 9,
+        a: 10,
+        b: 11,
+        c: 12,
+        d: 13,
+        e: 14,
+        f: 15,
+      };
+      const get_numeric_value = char_map[next_char];
+      if (get_numeric_value >= bitworkx) {
+        return true;
+      }
+    }
+  }
+  return false;
+};
+
+export const isBitworkHexPrefix = (bitwork: string) => {
+  if (/^[a-f0-9]{1,10}$/.test(bitwork)) {
+    return true;
+  }
+  return false;
+};
+
+export const isBitworkRefBase32Prefix = (bitwork: string): string | null => {
+  if (/^[abcdefghjkmnpqrstuvwxyz0-9]{1,10}$/.test(bitwork)) {
+    const enc = CrockfordBase32.decode(bitwork);
+    return enc.toString("hex").toLowerCase();
+  }
+  return null;
+};
+
+export const isValidBitworkString = (
+  fullstring: string,
+  safety = true
+): BitworkInfo | null => {
+  if (fullstring && fullstring.indexOf(".") === -1) {
+    if (isBitworkHexPrefix(fullstring)) {
+      return {
+        inputBitwork: fullstring,
+        hexBitwork: fullstring,
+        prefix: fullstring,
+        ext: undefined,
+      };
+    } else if (isBitworkRefBase32Prefix(fullstring)) {
+      const hex_encoded: string | any = isBitworkRefBase32Prefix(fullstring);
+      if (!hex_encoded) {
+        throw new Error("invalid base32 encoding: " + fullstring);
+      }
+      return {
+        inputBitwork: fullstring,
+        hexBitwork: hex_encoded,
+        prefix: hex_encoded,
+        ext: undefined,
+      };
+    } else {
+      throw new Error("Invalid bitwork string: " + fullstring);
+    }
+  }
+
+  const splitted = fullstring.split(".");
+  if (splitted.length !== 2) {
+    throw new Error("invalid bitwork string: " + fullstring);
+  }
+
+  let hex_prefix: any = null;
+  if (isBitworkHexPrefix(splitted[0])) {
+    hex_prefix = splitted[0];
+  } else if (isBitworkRefBase32Prefix(splitted[0])) {
+    hex_prefix = isBitworkRefBase32Prefix(splitted[0]);
+    if (!hex_prefix) {
+      throw new Error("invalid base32 encoding: " + splitted[0]);
+    }
+  } else {
+    throw new Error("Invalid bitwork string: " + fullstring);
+  }
+
+  const parsedNum = parseInt(splitted[1], 10);
+  if (isNaN(parsedNum)) {
+    throw new Error("invalid bitwork string: " + fullstring);
+  }
+  if (parsedNum <= 0 || parsedNum > 15) {
+    throw new Error("invalid bitwork string: " + fullstring);
+  }
+
+  if (safety) {
+    if (splitted[0].length >= 10) {
+      throw new Error(
+        "Safety check triggered: Prefix length is >= 8. Override with safety=false"
+      );
+    }
+  }
+  let hex_bitwork = "";
+  if (parsedNum) {
+    hex_bitwork = `${hex_prefix}.${parsedNum}`;
+  }
+  return {
+    inputBitwork: fullstring,
+    hexBitwork: hex_bitwork,
+    prefix: hex_prefix,
+    ext: parsedNum,
+  };
 };

@@ -12,6 +12,7 @@
     "bitcoinjs-lib": "^6.1.5",
     "borc": "^3.0.0",
     "bs58check": "^3.0.1",
+    "crockford-base32": "^2.0.0",
     "ecpair": "^2.1.0",
     "js-sha256": "^0.11.0",
     "node-polyfill-webpack-plugin": "^3.0.0",

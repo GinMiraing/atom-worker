@@ -41,12 +41,12 @@ const estimateRevealTxVsize = (p2tr: Payment) => {
 };
 
 export const buildRevealTransactionOptions = ({
-  inscriptions,
+  inscription,
   network,
   feeRate,
   postagsFee,
 }: {
-  inscriptions: {
+  inscription: {
     opType: string;
     payload: Uint8Array;
   };
@@ -58,7 +58,7 @@ export const buildRevealTransactionOptions = ({
     network,
   });
   const revealPublicKey = toXOnly(revealKeypair.publicKey);
-  const revealScript = buildRevealScript(revealPublicKey, inscriptions);
+  const revealScript = buildRevealScript(revealPublicKey, inscription);
 
   const p2pkRedeem: Payment = {
     output: revealScript,
